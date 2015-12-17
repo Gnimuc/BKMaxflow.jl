@@ -1,5 +1,5 @@
 module BKMaxflow
-using LightGraphs
+using LightGraphs, Iterators
 import LightGraphs: AbstractFlowAlgorithm, maximum_flow
 import Base: show
 
@@ -56,10 +56,9 @@ Node() = Node(0, :free, :passive, Int[])
 show(io::IO, x::Node) = print(io, "Node($(x.id),$(x.tree),$(x.status))")
 
 
-# Utility functions for Boykov-Kolmogorov's algorithm
+# Utility functions for Boykov-Kolmogorov's algorithm (compatible with those notations used in paper)
 TREE(p::Node) = p.tree
 PARENT(p::Node) = p.parent
-isfree(p::Node) = p.tree == :free ? true : false
 neighbors(nodes_vector::Vector{Node}, p::Node) = [nodes_vector[id] for id in p.neighborList]
 
 """
@@ -70,8 +69,6 @@ function tree_capacity{T<:Number}(p::Node, q::Node, capacity_matrix::AbstractArr
         return capacity_matrix[p.id,q.id] - flow_matrix[p.id,q.id]
     elseif TREE(p) == :T
         return capacity_matrix[q.id,p.id] - flow_matrix[q.id,p.id]
-    else
-        error("never here.")
     end
 end
 
@@ -86,7 +83,7 @@ function PATH(q::Node, p::Node, source::Int, target::Int)
         s = p
         t = q
     end
-    path = Vector{Node}()
+    path = Node[]
     while s.id != source
         unshift!(path, s)
         s = s.parent
@@ -131,17 +128,13 @@ function boykov_kolmogorov_impl{T<:Number}(
     # algorithm: Boykov, Yuri, and Vladimir Kolmogorov. "An experimental comparison of min-cut/max-flow algorithms for energy minimization in vision."
     #            Pattern Analysis and Machine Intelligence, IEEE Transactions on 26.9 (2004): 1124-1137.
     while true
-        # update ActiveNodes
-        for i = 1:length(ActiveNodes)
-            ActiveNodes[i] = nodes_vector[ActiveNodes[i].id]
-        end
         # “growth” stage: search trees S and T grow until they touch giving an s → t path
         # grow S or T to find an augmenting path P from s to t
-        P = growthstage!(source, target, ActiveNodes, nodes_vector, capacity_matrix, flow_matrix)
-        isempty(P) && break
+        Path = growthstage!(source, target, ActiveNodes, nodes_vector, capacity_matrix, flow_matrix)
+        isempty(Path) && break
         # “augmentation” stage: the found path is augmented, search tree(s) break into forest(s)
         # augment on P
-        augment = augmentationstage!(P, Orphans, nodes_vector, capacity_matrix, flow_matrix)
+        augment = augmentationstage!(Path, Orphans, nodes_vector, capacity_matrix, flow_matrix)
         flow += augment
         # “adoption” stage: trees S and T are restored.
         # adopt orphans
@@ -173,8 +166,6 @@ function growthstage!{T<:Number}(
                     q.parent = p
                     q.status = :active
                     push!(ActiveNodes, q)    # "First-In-First-Out"
-                    # update nodes vector
-                    nodes_vector[q.id] = q
                 end
                 if TREE(q)!=:free && TREE(q)!=TREE(p)
                     return PATH(p, q, source, target)
@@ -183,10 +174,9 @@ function growthstage!{T<:Number}(
         end
         p.status = :passive
         shift!(ActiveNodes)    # remove p from A ("First-In-First-Out")
-        # update nodes vector
-        nodes_vector[p.id] = p
     end
-    return P = Node[]
+
+    return Path = Node[]
 end
 
 
@@ -194,7 +184,7 @@ end
 Augmentation stage of Boykov-Kolmogorov's algorithm
 """
 function augmentationstage!{T<:Number}(
-    P::Vector{Node},
+    Path::Vector{Node},
     Orphans::Vector{Node},
     nodes_vector::Vector{Node},
     capacity_matrix::AbstractArray{T,2},
@@ -202,41 +192,31 @@ function augmentationstage!{T<:Number}(
     )
     # find the bottleneck capacity Δ on P
     Δ = typemax(T)
-    lenPath = length(P)
-    for i = 1:lenPath-1
-        p = P[i]
-        q = P[i+1]
+    for (p,q) in partition(Path,2,1)
         residual_capacity = capacity_matrix[p.id,q.id] - flow_matrix[p.id,q.id]
         @assert (residual_capacity > 0) "hmm... this is wired, residual_capacity is supposed to be positive."
         if Δ > residual_capacity
             Δ = residual_capacity
         end
     end
-    # update the "residual graph" by pushing flow Δ through P
-    for i = 1:lenPath-1
-        flow_matrix[P[i].id,P[i+1].id] += Δ
+    # update the residual graph by pushing flow Δ through P
+    for (p,q) in partition(Path,2,1)
+        flow_matrix[p.id,q.id] += Δ
     end
-    # produce orphans
-    for i = 1:length(P)-1
-        p = P[i]
-        q = P[i+1]
+    # for each edge (p,q) in P that becomes saturated
+    for (p,q) in partition(Path,2,1)
         if capacity_matrix[p.id,q.id] - flow_matrix[p.id,q.id] == 0
             if TREE(p)==:S && TREE(q)==:S
-                # decoupling its kinship
-                q.parent = Node()
+                q.parent = Node()    # decoupling its kinship
                 push!(Orphans, q)
-                # update nodes vector
-                nodes_vector[q.id] = q
             end
             if TREE(p)==:T && TREE(q)==:T
-                # decoupling its kinship
-                p.parent = Node()
+                p.parent = Node()    # decoupling its kinship
                 push!(Orphans, p)
-                # update nodes vector
-                nodes_vector[p.id] = p
             end
         end
     end
+
     return Δ
 end
 
@@ -259,11 +239,12 @@ function adoptionstage!{T<:Number}(
         no_valid_parent_flag = true
         for q in neighbors(nodes_vector, p)
             if TREE(q)==TREE(p) && tree_capacity(q, p, capacity_matrix, flow_matrix)>0 && q.tree != :free
-                p.parent = q
-                # update nodes vector
-                nodes_vector[p.id] = p
-                no_valid_parent_flag = false
-                break
+                # need further test
+                if q.parent != p
+                    p.parent = q
+                    no_valid_parent_flag = false
+                    break
+                end
             end
         end
         # if p does not find a valid parent
@@ -271,7 +252,6 @@ function adoptionstage!{T<:Number}(
             # scan all neighbors q of p
             for q in neighbors(nodes_vector, p)
                 if TREE(q)==TREE(p) && tree_capacity(q, p, capacity_matrix, flow_matrix)>0
-                    # need further test
                     if q.status != :active
                         q.status = :active
                         push!(ActiveNodes, q)
@@ -281,20 +261,11 @@ function adoptionstage!{T<:Number}(
                     q.parent = Node()
                     push!(Orphans, q)
                 end
-                # update node vector
-                nodes_vector[q.id] = q
             end
             # TREE(p) := ∅, A := A - {p}
             p.tree = :free
             p.status = :passive
-            for i = 1:length(ActiveNodes)
-                if ActiveNodes[i].id == p.id
-                    deleteat!(ActiveNodes, i)
-                    break
-                end
-            end
-            # update node vector
-            nodes_vector[p.id] = p
+            deleteat!(ActiveNodes, findin(ActiveNodes,[p]))
         end
     end
 end

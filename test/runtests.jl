@@ -3,7 +3,7 @@ using LightGraphs
 using Base.Test
 
 
-# Copy from LightGraphs/test
+# Copied from LightGraphs/test
 # Construct DiGraph
 flow_graph = DiGraph(8)
 
@@ -22,15 +22,32 @@ for e in flow_edges
     capacity_matrix[u,v] = f
 end
 
-# Construct the residual graph
-residual_graph = LightGraphs.residual(flow_graph)
-
 # warmup
-@show maximum_flow(residual_graph, 1, 8, capacity_matrix, algorithm=BoykovKolmogorovAlgorithm())[1]
-@show maximum_flow(residual_graph, 1, 8, capacity_matrix, algorithm=DinicAlgorithm())[1]
+@show maximum_flow(flow_graph, 1, 8, capacity_matrix, algorithm=BoykovKolmogorovAlgorithm())[1]
+@show maximum_flow(flow_graph, 1, 8, capacity_matrix, algorithm=DinicAlgorithm())[1]
 
-@time maximum_flow(residual_graph, 1, 8, capacity_matrix, algorithm=BoykovKolmogorovAlgorithm())
-@time maximum_flow(residual_graph, 1, 8, capacity_matrix, algorithm=DinicAlgorithm())
+@time maximum_flow(flow_graph, 1, 8, capacity_matrix, algorithm=BoykovKolmogorovAlgorithm())
+@time maximum_flow(flow_graph, 1, 8, capacity_matrix, algorithm=DinicAlgorithm())
 
 # test
-@test maximum_flow(residual_graph, 1, 8, capacity_matrix, algorithm=BoykovKolmogorovAlgorithm())[1] == 28
+@test maximum_flow(flow_graph, 1, 8, capacity_matrix, algorithm=BoykovKolmogorovAlgorithm())[1] == 28
+
+
+# improve coverage
+flow_graph = DiGraph(6)
+
+flow_edges = [
+    (1,2,5),(1,3,3),(1,4,2),(1,5,1),
+    (2,6,5),(3,6,3),(4,6,2),(5,6,1),
+    (2,3,6),(3,2,7)
+]
+
+capacity_matrix = zeros(Int ,nv(flow_graph) ,nv(flow_graph))
+
+for e in flow_edges
+    u,v,f = e
+    add_edge!(flow_graph,u,v)
+    capacity_matrix[u,v] = f
+end
+
+@test maximum_flow(flow_graph, 1, 6, capacity_matrix, algorithm=BoykovKolmogorovAlgorithm())[1] == 11
