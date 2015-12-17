@@ -1,4 +1,5 @@
 using BKMaxflow
+using LightGraphs
 using Base.Test
 
 
@@ -8,7 +9,7 @@ flow_graph = DiGraph(8)
 
 # Load custom dataset
 flow_edges = [
-    (1,2,10),(1,3,5),(1,4,15),(3,2,4),(2,5,9),
+    (1,2,10),(1,3,5),(1,4,15),(2,3,4),(2,5,9),
     (2,6,15),(3,4,4),(3,6,8),(4,7,16),(5,6,15),
     (5,8,10),(6,7,15),(6,8,10),(7,3,6),(7,8,10)
 ]
@@ -25,11 +26,11 @@ end
 residual_graph = LightGraphs.residual(flow_graph)
 
 # warmup
-@show maximum_flow(residual_graph, 1, 8, capacity_matrix, BoykovKolmogorovAlgorithm())[1]
-@show LightGraphs.dinic_impl(residual_graph, 1, 8, capacity_matrix)[1]
+@show maximum_flow(residual_graph, 1, 8, capacity_matrix, algorithm=BoykovKolmogorovAlgorithm())[1]
+@show maximum_flow(residual_graph, 1, 8, capacity_matrix, algorithm=DinicAlgorithm())[1]
 
-@time boykov_kolmogorov_impl(residual_graph, 1, 8, capacity_matrix)[1]
-@time LightGraphs.dinic_impl(residual_graph, 1, 8, capacity_matrix)[1]
+@time maximum_flow(residual_graph, 1, 8, capacity_matrix, algorithm=BoykovKolmogorovAlgorithm())
+@time maximum_flow(residual_graph, 1, 8, capacity_matrix, algorithm=DinicAlgorithm())
 
 # test
-@test boykov_kolmogorov_impl(residual_graph, 1, 8, capacity_matrix)[1] == 28
+@test maximum_flow(residual_graph, 1, 8, capacity_matrix, algorithm=BoykovKolmogorovAlgorithm())[1] == 28

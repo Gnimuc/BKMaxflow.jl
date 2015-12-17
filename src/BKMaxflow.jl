@@ -1,6 +1,6 @@
 module BKMaxflow
 using LightGraphs
-import LightGraphs: AbstractFlowAlgorithm
+import LightGraphs: AbstractFlowAlgorithm, maximum_flow
 import Base: show
 
 
@@ -18,7 +18,7 @@ function maximum_flow{T<:Number}(
     flow_graph::LightGraphs.DiGraph,
     source::Int,
     target::Int,
-    capacity_matrix::AbstractArray{T,2};
+    capacity_matrix::AbstractArray{T,2},
     algorithm::BoykovKolmogorovAlgorithm
     )
     residual_graph = LightGraphs.residual(flow_graph)
@@ -258,9 +258,6 @@ function adoptionstage!{T<:Number}(
         # find a new valid parent for p among its neighbors
         no_valid_parent_flag = true
         for q in neighbors(nodes_vector, p)
-            if q.id == 6
-                @show q.parent
-            end
             if TREE(q)==TREE(p) && tree_capacity(q, p, capacity_matrix, flow_matrix)>0 && q.tree != :free
                 p.parent = q
                 # update nodes vector
@@ -273,7 +270,6 @@ function adoptionstage!{T<:Number}(
         if no_valid_parent_flag
             # scan all neighbors q of p
             for q in neighbors(nodes_vector, p)
-                @show q.id,q.parent,q.parent.id, q.parent.parent
                 if TREE(q)==TREE(p) && tree_capacity(q, p, capacity_matrix, flow_matrix)>0
                     # need further test
                     if q.status != :active
@@ -307,5 +303,6 @@ end
 # exports
 export BoykovKolmogorovAlgorithm
 export maximum_flow
+
 
 end # module
