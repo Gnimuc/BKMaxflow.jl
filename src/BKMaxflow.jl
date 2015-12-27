@@ -138,7 +138,7 @@ function boykov_kolmogorov_impl{T<:Number}(
         flow += augment
         # “adoption” stage: trees S and T are restored.
         # adopt orphans
-        adoptionstage!(Orphans, ActiveNodes, nodes_vector, capacity_matrix, flow_matrix)
+        adoptionstage!(source, target, Orphans, ActiveNodes, nodes_vector, capacity_matrix, flow_matrix)
     end
 
     return flow, flow_matrix
@@ -225,6 +225,8 @@ end
 Adoption stage of Boykov-Kolmogorov's algorithm
 """
 function adoptionstage!{T<:Number}(
+    source::Int,
+    target::Int,
     Orphans::Vector{Node},
     ActiveNodes::Vector{Node},
     nodes_vector::Vector{Node},
@@ -239,11 +241,17 @@ function adoptionstage!{T<:Number}(
         no_valid_parent_flag = true
         for q in neighbors(nodes_vector, p)
             if TREE(q)==TREE(p) && tree_capacity(q, p, capacity_matrix, flow_matrix)>0 && q.tree != :free
-                # need further test
-                if q.parent != p
-                    p.parent = q
-                    no_valid_parent_flag = false
-                    break
+                # p.parent = q
+                # no loop-tree! note that here we should search the whole tree. the :S, :T labels are not very helpful, maybe I should redesign the data structure.
+                parentCandidate = q
+                while parentCandidate.parent != p
+                    if parentCandidate.parent.id == source || parentCandidate.parent.id == target
+                        p.parent = q
+                        no_valid_parent_flag = false
+                        break
+                    end
+                    parentCandidate.parent.id == 0 && break    # if parent is Node(), then break
+                    parentCandidate = parentCandidate.parent
                 end
             end
         end

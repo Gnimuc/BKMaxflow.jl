@@ -1,10 +1,8 @@
 # The Boykov-Kolmogorov Max-flow Algorithm
 
-[![Build Status](https://travis-ci.org/Gnimuc/BKMaxflow.jl.svg?branch=master)](https://travis-ci.org/Gnimuc/BKMaxflow.jl)
-[![Build status](https://ci.appveyor.com/api/projects/status/om3ojadu6guqtgxa?svg=true)](https://ci.appveyor.com/project/Gnimuc/bkmaxflow-jl-8ibhc)
-[![codecov.io](https://codecov.io/github/Gnimuc/BKMaxflow.jl/coverage.svg?branch=master)](https://codecov.io/github/Gnimuc/BKMaxflow.jl?branch=master)
+[![Project Status: Abandoned – Initial development has started, but there has not yet been a stable, usable release; the project has been abandoned and the author(s) do not intend on continuing development.](http://www.repostatus.org/badges/latest/abandoned.svg)](http://www.repostatus.org/#abandoned) bacause there has already been a BK-maxflow method in LightGraphs.jl.
 
-Currently, the algorithm is fully implemented in Julia. If you are new to BK-Maxflow algorithm and stumped by the C++ source code [here](http://vision.csd.uwo.ca/code/), you may find this Julia version of the algorithm is much simpler. I also plan to add an interface by which users can alternatively choose which version they prefer to use in the future.
+Currently, the algorithm is fully implemented in Julia. If you are new to BK-Maxflow algorithm and stumped by the C++ source code [here](http://vision.csd.uwo.ca/code/), you may find this Julia version of the algorithm is much simpler. <strike>I also plan to add an interface by which users can alternatively choose which version they prefer to use in the future.</strike>
  
 ## Installation
 
@@ -33,10 +31,6 @@ end
 julia> maximum_flow(flow_graph, 1, 8, capacity_matrix, algorithm=BoykovKolmogorovAlgorithm())[1]
 28
 ```
-
-## TODO List
-- [ ] do more tests and improve coverage
-- [ ] add an interface for switching between Julia version and C++ version
 
 ## Reference
 Boykov, Yuri, and Vladimir Kolmogorov. "An experimental comparison of min-cut/max-flow algorithms for energy minimization in vision." Pattern Analysis and Machine Intelligence, IEEE Transactions on 26.9 (2004): 1124-1137.
