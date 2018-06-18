@@ -33,7 +33,7 @@ vertices = collect(1:n)
 capacity_matrix = zeros(n, n)
 
 for u = 1:n, v = 1:n
-    rand() > 0.9 && continue
+    rand() > 0.5 && continue
     u == 1 && v == n && continue
     u == n && v == 1 && continue
     lg.add_edge!(flow_graph, u, v)
