@@ -24,7 +24,7 @@ function boykov_kolmogorov(source::Int, sink::Int, neighbors::Vector{Vector{Int}
     STATUS = fill(BK_FREE, vertexNum)
     STATUS[source] = BK_S_ACTIVE
     STATUS[sink] = BK_T_ACTIVE
-    MARK = similar(STATUS)
+    ORPHAN = fill(false, vertexNum)
     activeQueue = Int[source, sink]  # this queue could also contains inactive nodes which will be automatically skipped in the growth stage
     O = Int[]
     residualMatrix = copy(capacityMatrix)
@@ -40,7 +40,7 @@ function boykov_kolmogorov(source::Int, sink::Int, neighbors::Vector{Vector{Int}
         # “augmentation” stage: the found path is augmented, search tree(s) break into forest(s)
         flow += augmentation_stage!(P, O, STATUS, PARENT, residualMatrix)
         # “adoption” stage: trees S and T are restored
-        adoption_stage!(source, sink, neighbors, O, activeQueue, MARK, STATUS, PARENT, residualMatrix)
+        adoption_stage!(source, sink, neighbors, O, activeQueue, ORPHAN, STATUS, PARENT, residualMatrix)
     end
     return flow, capacityMatrix-residualMatrix, STATUS
 end
@@ -101,59 +101,62 @@ function augmentation_stage!(P::Vector{Int}, O::Vector{Int}, STATUS::Vector{BKSt
         if TREE(p) == TREE(q) == BK_S
             PARENT[q] = 0
             unshift!(O, q)
+            # STATUS[p] |= BK_SATURATED
         end
         if TREE(p) == TREE(q) == BK_T
             PARENT[p] = 0
             unshift!(O, p)
+            # STATUS[q] |= BK_SATURATED
         end
     end
     return Δ
 end
 
-function adoption_stage!(source::Int, sink::Int, neighbors::Vector{Vector{Int}}, O::Vector{Int}, activeQueue::Vector{Int}, MARK::Vector{BKStatusBits},
-    STATUS::Vector{BKStatusBits}, PARENT::Vector{Int}, residualMatrix::AbstractMatrix{T}) where {T<:Real}
+function adoption_stage!(source::Int, sink::Int, neighbors::Vector{Vector{Int}}, O::Vector{Int}, activeQueue::Vector{Int},
+    ORPHAN::Vector{Bool}, STATUS::Vector{BKStatusBits}, PARENT::Vector{Int}, residualMatrix::AbstractMatrix{T}) where {T<:Real}
     TREE(x) = STATUS[x] & (BK_S | BK_T)
-    MARK .= STATUS
+    fill!(ORPHAN, false)
     while !isempty(O)
         # pick an orphan node p ∈ O and remove it from O
         p = pop!(O)
         # find a new valid parent for p among its neighbors
         has_valid_parent = false
+        # all_non_saturated = STATUS[p] & BK_SATURATED == ∅
         if STATUS[p] & BK_S == BK_S
             @inbounds for q in neighbors[p]
-                MARK[q] & BK_ORPHAN == BK_ORPHAN && continue
+                ORPHAN[q] && continue
                 TREE(q) == TREE(p) || continue
                 residualMatrix[q,p] > 0 || continue
                 # the “origin” of q should be either source or sink, it should not originates from orphan
                 x = q
                 while PARENT[x] ≠ 0
                     x = PARENT[x]
-                    MARK[x] & BK_ORPHAN == BK_ORPHAN && break
-                    MARK[x] |= BK_ORPHAN
+                    ORPHAN[x] && break
+                    ORPHAN[x] = true
                 end
                 if x == source || x == sink
                     PARENT[p] = q
                     has_valid_parent = true
-                    MARK .= STATUS
+                    fill!(ORPHAN, false)
                     break
                 end
             end
         else
             @inbounds for q in neighbors[p]
-                MARK[q] & BK_ORPHAN == BK_ORPHAN && continue
+                ORPHAN[q] && continue
                 TREE(q) == TREE(p) || continue
                 residualMatrix[p,q] > 0 || continue
                 # the “origin” of q should be either source or sink, it should not originates from orphan
                 x = q
                 while PARENT[x] ≠ 0
                     x = PARENT[x]
-                    MARK[x] & BK_ORPHAN == BK_ORPHAN && break
-                    MARK[x] |= BK_ORPHAN
+                    ORPHAN[x] && break
+                    ORPHAN[x] = true
                 end
                 if x == source || x == sink
                     PARENT[p] = q
                     has_valid_parent = true
-                    MARK .= STATUS
+                    fill!(ORPHAN, false)
                     break
                 end
             end

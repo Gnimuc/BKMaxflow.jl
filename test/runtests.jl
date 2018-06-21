@@ -14,22 +14,20 @@ using Base.Test
             u == 1 && v == n && continue
             u == n && v == 1 && continue
             lg.add_edge!(flow_graph, u, v)
+            lg.add_edge!(flow_graph, v, u)
             capacity_matrix[u,v] = rand()
         end
         xxx = lg.DiGraph(lg.Graph(flow_graph))
         a, b, c = LightGraphsFlows.boykov_kolmogorov_impl(xxx, 1, n, capacity_matrix)
-        aa, bb, cc = boykov_kolmogorov(1, n, xxx.fadjlist, capacity_matrix)
+        aa, bb, cc = boykov_kolmogorov(1, n, flow_graph.fadjlist, capacity_matrix)
         @test a ≈ aa
     end
 end
 
 
-n = 1000
+n = 5
 const lg = LightGraphs
 flow_graph = lg.DiGraph(n)
-
-vertices = collect(1:n)
-
 capacity_matrix = zeros(n, n)
 
 for u = 1:n, v = 1:n
@@ -37,14 +35,24 @@ for u = 1:n, v = 1:n
     u == 1 && v == n && continue
     u == n && v == 1 && continue
     lg.add_edge!(flow_graph, u, v)
+    lg.add_edge!(flow_graph, v, u)
     capacity_matrix[u,v] = rand()
 end
 
+# @enter lg.add_edge!(flow_graph, 1, 8)
+# @enter lg.Graph(flow_graph)
+
+# lg.neighbors(flow_graph, 1)
+
+flow_graph.fadjlist
+
+xxx.fadjlist
+xxx.badjlist
 
 xxx = lg.DiGraph(lg.Graph(flow_graph))
 
 a, b, c = LightGraphsFlows.boykov_kolmogorov_impl(xxx, 1, n, capacity_matrix)
-aa, bb, cc = boykov_kolmogorov(1, n, xxx.fadjlist, capacity_matrix)
+aa, bb, cc = boykov_kolmogorov(1, n, flow_graph.fadjlist, capacity_matrix)
 @test a ≈ aa
 b ≈ bb
 b - bb
