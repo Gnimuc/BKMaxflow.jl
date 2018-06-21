@@ -30,18 +30,17 @@ const lg = LightGraphs
 flow_graph = lg.DiGraph(n)
 capacity_matrix = zeros(n, n)
 
-graph = Vector{Dict{Int,Float64}}()
+graph = Vector{Dict{Int,Bool}}()
 
 for u = 1:n
-    dict = Dict{Int,Float64}()
+    dict = Dict{Int,Bool}()
     for v = 1:n
         rand() > 0.1 && continue
         u == 1 && v == n && continue
         u == n && v == 1 && continue
         lg.add_edge!(flow_graph, u, v)
-        val = rand()
-        capacity_matrix[u,v] = val
-        dict[v] = val
+        capacity_matrix[u,v] = rand()
+        dict[v] = true
     end
     push!(graph, dict)
 end
@@ -49,7 +48,7 @@ end
 for (p, dict) in enumerate(graph)
     for q in keys(dict)
         haskey(graph[q], p) && continue
-        graph[q][p] = 0
+        graph[q][p] = false
     end
 end
 
@@ -71,7 +70,7 @@ xxx.fadjlist
 xxx = lg.DiGraph(lg.Graph(flow_graph))
 
 a, b, c = LightGraphsFlows.boykov_kolmogorov_impl(xxx, 1, n, capacity_matrix)
-aa, bb = boykov_kolmogorov(1, n, graph)
+aa, bb = boykov_kolmogorov(1, n, graph, capacity_matrix)
 @test a ≈ aa
 # b ≈ bb
 # b - bb
@@ -81,7 +80,7 @@ aa, bb = boykov_kolmogorov(1, n, graph)
 
 
 Profile.clear()
-@profiler boykov_kolmogorov(1, n, graph)
+@profiler boykov_kolmogorov(1, n, graph, capacity_matrix)
 
 Profile.clear()
 @profiler LightGraphsFlows.boykov_kolmogorov_impl(xxx, 1, n, capacity_matrix)
@@ -91,7 +90,7 @@ using BenchmarkTools
 
 @benchmark LightGraphsFlows.boykov_kolmogorov_impl($xxx, 1, n, $capacity_matrix)
 
-@benchmark boykov_kolmogorov(1, n, $graph)
+@benchmark boykov_kolmogorov(1, n, $graph, $capacity_matrix)
 
 # @benchmark boykov_kolmogorov(1, n, $(xxx.fadjlist), $capacity_matrix)
 
