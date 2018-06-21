@@ -55,10 +55,9 @@ function growth_stage!(source, sink, residualGraph, residualMatrix, activeQueue,
     while !isempty(activeQueue)
         p = last(activeQueue)  # pick an active node p ∈ A ("First-In-First-Out"): enqueue -> queue -> dequeue
         STATUS[p] & BK_ACTIVE == BK_ACTIVE || (pop!(activeQueue); continue)  # automatically skip inactive nodes
-        rp = residualGraph[p]
         if STATUS[p] & BK_S == BK_S
-            for q in neighbors(residualGraph, p)
-                rp[q] || continue
+            for (q,treecap) in residualGraph[p]
+                treecap || continue
                 if TREE(q) == ∅
                     # then add q to search tree as an active node
                     STATUS[q] = STATUS[p]
@@ -68,8 +67,9 @@ function growth_stage!(source, sink, residualGraph, residualMatrix, activeQueue,
                 TREE(q)≠∅ && TREE(q)≠TREE(p) && return TREE(p)==BK_S ? PATH(p,q,source,sink,PARENT) : PATH(q,p,source,sink,PARENT)
             end
         else
-            for q in neighbors(residualGraph, p)
-                residualGraph[q][p] || continue
+            for (q,treecap) in residualGraph[p]
+                xx = residualGraph[q]
+                get(xx, p, false) || continue
                 if TREE(q) == ∅
                     # then add q to search tree as an active node
                     STATUS[q] = STATUS[p]
@@ -122,11 +122,10 @@ function adoption_stage!(source, sink, residualGraph, residualMatrix, O, activeQ
     while !isempty(O)
         # pick an orphan node p ∈ O and remove it from O
         p = pop!(O)
-        rp = residualGraph[p]
         # find a new valid parent for p among its neighbors
         has_valid_parent = false
         if STATUS[p] & BK_S == BK_S
-            for q in neighbors(residualGraph,p)
+            for (q,treecap) in residualGraph[p]
                 ORPHAN[q] && continue
                 TREE(q) == TREE(p) || continue
                 residualGraph[q][p] || continue
@@ -145,10 +144,10 @@ function adoption_stage!(source, sink, residualGraph, residualMatrix, O, activeQ
                 end
             end
         else
-            for q in neighbors(residualGraph,p)
+            for (q,treecap) in residualGraph[p]
                 ORPHAN[q] && continue
                 TREE(q) == TREE(p) || continue
-                rp[q] || continue
+                treecap || continue
                 # the “origin” of q should be either source or sink, it should not originates from orphan
                 x = q
                 while PARENT[x] ≠ 0
@@ -165,7 +164,7 @@ function adoption_stage!(source, sink, residualGraph, residualMatrix, O, activeQ
             end
         end
         has_valid_parent && continue
-        for q in neighbors(residualGraph,p)
+        for (q,treecap) in residualGraph[p]
             TREE(q) == TREE(p) || continue
             if tree_cap(q,p)
                 STATUS[q] |= BK_ACTIVE
