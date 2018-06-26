@@ -18,7 +18,7 @@ pixelFirst, pixelEnd = first(pixelRange), last(pixelRange)
 idx = 0
 for ii in pixelRange
     i = sub2ind(imageDims, ii.I...)
-    neighborRange = CartesianRange(max(pixelFirst, ii-pixelFirst), min(pixelEnd, ii+pixelFirst))
+    neighborRange = CartesianRange(max(pixelFirst, ii-16pixelFirst), min(pixelEnd, ii+16pixelFirst))
     neighbor = Tuple{Int,Int}[]
     for jj in neighborRange
         if ii < jj
@@ -65,19 +65,19 @@ aa, cc = boykov_kolmogorov(1, n*n, neighbors, residualPQ, residualQP)
 @test a ≈ aa
 
 
-@enter boykov_kolmogorov(1, n*n, neighbors, residualPQ, residualQP)
-@enter LightGraphsFlows.boykov_kolmogorov_impl(xxx, 1, n*n, capacity_matrix)
+# @enter boykov_kolmogorov(1, n*n, neighbors, residualPQ, residualQP)
+# @enter LightGraphsFlows.boykov_kolmogorov_impl(xxx, 1, n*n, capacity_matrix)
 
 Profile.clear()
 @profiler boykov_kolmogorov(1, n*n, neighbors, residualPQ, residualQP)
 
 Profile.clear()
-@profiler LightGraphsFlows.boykov_kolmogorov_impl(xxx, 1, n, capacity_matrix)
+@profiler LightGraphsFlows.boykov_kolmogorov_impl(xxx, 1, n*n, capacity_matrix)
 
 
 using BenchmarkTools
 
-@benchmark LightGraphsFlows.boykov_kolmogorov_impl($xxx, 1, n, $capacity_matrix)
+@benchmark LightGraphsFlows.boykov_kolmogorov_impl($xxx, 1, n*n, $capacity_matrix)
 
 @benchmark boykov_kolmogorov(1, n*n, $neighbors, $residualPQ, $residualQP)
 
