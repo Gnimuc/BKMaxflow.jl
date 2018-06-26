@@ -3,7 +3,7 @@ using LightGraphsFlows
 using Base.Test
 
 
-n = 10
+n = 3
 const lg = LightGraphs
 flow_graph = lg.DiGraph(n*n)
 
@@ -52,7 +52,7 @@ xxx = lg.DiGraph(lg.Graph(flow_graph))
 
 lg.neighbors(xxx, 1)
 
-lg.neighbors(flow_graph, 100)
+lg.neighbors(flow_graph, 2)
 
 a, b, c = LightGraphsFlows.boykov_kolmogorov_impl(xxx, 1, n*n, capacity_matrix)
 aa, cc = boykov_kolmogorov(1, n*n, neighbors, residualPQ, residualQP)
@@ -61,7 +61,7 @@ b ≈ bb
 b - bb
 vecnorm(b - bb)
 
-# @enter boykov_kolmogorov(1, n, xxx.fadjlist, capacity_matrix)
+@enter boykov_kolmogorov(1, n*n, neighbors, residualPQ, residualQP)
 
 
 Profile.clear()

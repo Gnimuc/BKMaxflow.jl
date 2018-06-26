@@ -25,7 +25,8 @@ function boykov_kolmogorov(source::Int, sink::Int, neighbors::Vector{Vector{Tupl
     MARK = similar(STATUS)
     A = Int[source, sink]  # this queue could also contains inactive nodes which will be automatically skipped in the growth stage
     O = Int[]
-    # residualMatrix = copy(capacityMatrix)
+    PQ = copy(residualPQ)
+    QP = copy(residualQP)
     flow = zero(Float64)
     # Boykov, Yuri, and Vladimir Kolmogorov. "An experimental comparison of min-cut/max-flow
     # algorithms for energy minimization in vision." Pattern Analysis and Machine Intelligence,
@@ -33,12 +34,12 @@ function boykov_kolmogorov(source::Int, sink::Int, neighbors::Vector{Vector{Tupl
     while true
         # “growth” stage: search trees S and T grow until they touch giving an s → t path
         # grow S or T to find an augmenting path P from s to t
-        P = growth_stage!(source, sink, neighbors, residualPQ, residualQP, A, STATUS, PARENT)
+        P = growth_stage!(source, sink, neighbors, PQ, QP, A, STATUS, PARENT)
         isempty(P) && break
         # “augmentation” stage: the found path is augmented, search tree(s) break into forest(s)
-        flow += augmentation_stage!(neighbors, residualPQ, residualQP, P, O, STATUS, PARENT)
+        flow += augmentation_stage!(neighbors, PQ, QP, P, O, STATUS, PARENT)
         # “adoption” stage: trees S and T are restored
-        adoption_stage!(source, sink, neighbors, residualPQ, residualQP, O, A, MARK, STATUS, PARENT)
+        adoption_stage!(source, sink, neighbors, PQ, QP, O, A, MARK, STATUS, PARENT)
     end
     return flow, STATUS
 end
@@ -103,6 +104,7 @@ function adoption_stage!(source, sink, neighbors, residualPQ, residualQP, O, A, 
     tree_cap(x, idx) = TREE(x)==BK_S ? residualPQ[idx] : residualQP[idx]
     MARK .= STATUS
     while !isempty(O)
+        @show O
         # pick an orphan node p ∈ O and remove it from O
         p = pop!(O)
         # find a new valid parent for p among its neighbors
