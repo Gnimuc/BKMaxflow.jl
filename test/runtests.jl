@@ -2,62 +2,60 @@ using BKMaxflow
 using LightGraphsFlows
 using Base.Test
 
-@testset "proof" begin
-    for i in [0.01, 0.1, 0.2, 0.4, 0.8, 1]
-        n = 1000
-        const lg = LightGraphs
-        flow_graph = lg.DiGraph(n)
-        vertices = collect(1:n)
-        capacity_matrix = zeros(n, n)
-        for u = 1:n, v = 1:n
-            rand() > i && continue
-            u == 1 && v == n && continue
-            u == n && v == 1 && continue
-            lg.add_edge!(flow_graph, u, v)
-            capacity_matrix[u,v] = rand()
-        end
-        xxx = lg.DiGraph(lg.Graph(flow_graph))
-        a, b, c = LightGraphsFlows.boykov_kolmogorov_impl(xxx, 1, n, capacity_matrix)
-        aa, bb, cc = boykov_kolmogorov(1, n, xxx.fadjlist, capacity_matrix)
-        @test a ≈ aa
-    end
-end
 
-
-n = 128
+n = 10
 const lg = LightGraphs
 flow_graph = lg.DiGraph(n*n)
 
 imageDims = (n,n)
 
 capacity_matrix = zeros(n*n,n*n)
-residuals = Dict{Tuple{Int,Int},Float64}()
-
+residualPQ = []
+residualQP = []
+neighbors = Vector{Vector{Tuple{Int,Int}}}(n*n)
 pixelRange = CartesianRange(imageDims)
 pixelFirst, pixelEnd = first(pixelRange), last(pixelRange)
+idx = 0
 for ii in pixelRange
     i = sub2ind(imageDims, ii.I...)
-    neighborRange = CartesianRange(max(pixelFirst, ii-2pixelFirst), min(pixelEnd, ii+2pixelFirst))
+    neighborRange = CartesianRange(max(pixelFirst, ii-pixelFirst), min(pixelEnd, ii+pixelFirst))
+    neighbor = Tuple{Int,Int}[]
     for jj in neighborRange
-        if jj < ii
+        if ii < jj
             j = sub2ind(imageDims, jj.I...)
+            # lg
             lg.add_edge!(flow_graph, i, j)
             lg.add_edge!(flow_graph, j, i)
-            v = 100*rand()
-            capacity_matrix[i,j] = v
-            residuals[i,j] = v
-            capacity_matrix[j,i] = v
-            residuals[j,i] = v
+            vf = 100*rand()
+            vb = 100*rand()
+            capacity_matrix[i,j] = vf
+            capacity_matrix[j,i] = vb
+            # bk
+            idx += 1
+            push!(residualPQ, vf)
+            push!(residualQP, vb)
+            push!(neighbor, (j,idx))
         end
     end
+    neighbors[i] = neighbor
 end
-residuals
-capacity_matrix
+
+for q in eachindex(neighbors)
+    for (p,idx) in neighbors[q]
+        q < p && push!(neighbors[p], (q,idx))
+    end
+end
+
+neighbors
 
 xxx = lg.DiGraph(lg.Graph(flow_graph))
 
+lg.neighbors(xxx, 1)
+
+lg.neighbors(flow_graph, 100)
+
 a, b, c = LightGraphsFlows.boykov_kolmogorov_impl(xxx, 1, n*n, capacity_matrix)
-aa, cc = boykov_kolmogorov(1, n*n, xxx.fadjlist, residuals)
+aa, cc = boykov_kolmogorov(1, n*n, neighbors, residualPQ, residualQP)
 @test a ≈ aa
 b ≈ bb
 b - bb
