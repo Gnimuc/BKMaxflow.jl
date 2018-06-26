@@ -17,7 +17,7 @@ end
 
 @inline tree_cap(p, q, residualMatrix, STATUS) = STATUS[p] & BK_S == BK_S ? residualMatrix[p,q] : residualMatrix[q,p]
 
-function boykov_kolmogorov(source::Int, sink::Int, neighbors::Vector{Vector{Int}}, capacityMatrix::AbstractMatrix{T}) where {T<:Real}
+function boykov_kolmogorov(source::Int, sink::Int, neighbors::Vector{Vector{Int}}, capacityMatrix)
     # initialize: S = {s}, T = {t},  A = {s,t}, O = ∅
     vertexNum = length(neighbors)
     PARENT = zeros(Int, vertexNum)
@@ -28,7 +28,7 @@ function boykov_kolmogorov(source::Int, sink::Int, neighbors::Vector{Vector{Int}
     activeQueue = Int[source, sink]  # this queue could also contains inactive nodes which will be automatically skipped in the growth stage
     O = Int[]
     residualMatrix = copy(capacityMatrix)
-    flow = zero(T)
+    flow = zero(Float64)
     # Boykov, Yuri, and Vladimir Kolmogorov. "An experimental comparison of min-cut/max-flow
     # algorithms for energy minimization in vision." Pattern Analysis and Machine Intelligence,
     # IEEE Transactions on 26.9 (2004): 1124-1137.
@@ -42,11 +42,11 @@ function boykov_kolmogorov(source::Int, sink::Int, neighbors::Vector{Vector{Int}
         # “adoption” stage: trees S and T are restored
         adoption_stage!(source, sink, neighbors, O, activeQueue, MARK, STATUS, PARENT, residualMatrix)
     end
-    return flow, capacityMatrix-residualMatrix, STATUS
+    return flow, STATUS
 end
 
 function growth_stage!(source::Integer, sink::Integer, neighbors::Vector{Vector{Int}}, activeQueue::Vector{Int},
-                       STATUS::Vector{BKStatusBits}, PARENT::Vector{Int}, residualMatrix::AbstractMatrix)
+                       STATUS::Vector{BKStatusBits}, PARENT::Vector{Int}, residualMatrix)
     TREE(x) = STATUS[x] & (BK_S | BK_T)
     while !isempty(activeQueue)
         p = last(activeQueue)  # pick an active node p ∈ A ("First-In-First-Out"): enqueue -> queue -> dequeue
@@ -82,7 +82,7 @@ function growth_stage!(source::Integer, sink::Integer, neighbors::Vector{Vector{
 end
 
 function augmentation_stage!(P::Vector{Int}, O::Vector{Int}, STATUS::Vector{BKStatusBits},
-                             PARENT::Vector{Int}, residualMatrix::AbstractMatrix{T}) where {T<:Real}
+                             PARENT::Vector{Int}, residualMatrix)
     TREE(x) = STATUS[x] & (BK_S | BK_T)
     # find the bottleneck capacity Δ on P
     Δ = Inf
@@ -111,7 +111,7 @@ function augmentation_stage!(P::Vector{Int}, O::Vector{Int}, STATUS::Vector{BKSt
 end
 
 function adoption_stage!(source::Int, sink::Int, neighbors::Vector{Vector{Int}}, O::Vector{Int}, activeQueue::Vector{Int}, MARK::Vector{BKStatusBits},
-    STATUS::Vector{BKStatusBits}, PARENT::Vector{Int}, residualMatrix::AbstractMatrix{T}) where {T<:Real}
+    STATUS::Vector{BKStatusBits}, PARENT::Vector{Int}, residualMatrix)
     TREE(x) = STATUS[x] & (BK_S | BK_T)
     MARK .= STATUS
     while !isempty(O)

@@ -24,27 +24,40 @@ using Base.Test
 end
 
 
-n = 1000
+n = 128
 const lg = LightGraphs
-flow_graph = lg.DiGraph(n)
+flow_graph = lg.DiGraph(n*n)
 
-vertices = collect(1:n)
+imageDims = (n,n)
 
-capacity_matrix = zeros(n, n)
+capacity_matrix = zeros(n*n,n*n)
+residuals = Dict{Tuple{Int,Int},Float64}()
 
-for u = 1:n, v = 1:n
-    rand() > 0.5 && continue
-    u == 1 && v == n && continue
-    u == n && v == 1 && continue
-    lg.add_edge!(flow_graph, u, v)
-    capacity_matrix[u,v] = rand()
+pixelRange = CartesianRange(imageDims)
+pixelFirst, pixelEnd = first(pixelRange), last(pixelRange)
+for ii in pixelRange
+    i = sub2ind(imageDims, ii.I...)
+    neighborRange = CartesianRange(max(pixelFirst, ii-2pixelFirst), min(pixelEnd, ii+2pixelFirst))
+    for jj in neighborRange
+        if jj < ii
+            j = sub2ind(imageDims, jj.I...)
+            lg.add_edge!(flow_graph, i, j)
+            lg.add_edge!(flow_graph, j, i)
+            v = 100*rand()
+            capacity_matrix[i,j] = v
+            residuals[i,j] = v
+            capacity_matrix[j,i] = v
+            residuals[j,i] = v
+        end
+    end
 end
-
+residuals
+capacity_matrix
 
 xxx = lg.DiGraph(lg.Graph(flow_graph))
 
-a, b, c = LightGraphsFlows.boykov_kolmogorov_impl(xxx, 1, n, capacity_matrix)
-aa, bb, cc = boykov_kolmogorov(1, n, xxx.fadjlist, capacity_matrix)
+a, b, c = LightGraphsFlows.boykov_kolmogorov_impl(xxx, 1, n*n, capacity_matrix)
+aa, cc = boykov_kolmogorov(1, n*n, xxx.fadjlist, residuals)
 @test a ≈ aa
 b ≈ bb
 b - bb
@@ -54,7 +67,7 @@ vecnorm(b - bb)
 
 
 Profile.clear()
-@profiler boykov_kolmogorov(1, n, xxx.fadjlist, capacity_matrix)
+@profiler boykov_kolmogorov(1, n, xxx.fadjlist, residuals)
 
 Profile.clear()
 @profiler LightGraphsFlows.boykov_kolmogorov_impl(xxx, 1, n, capacity_matrix)
@@ -66,13 +79,13 @@ using BenchmarkTools
 
 @benchmark boykov_kolmogorov(1, n, $(xxx.fadjlist), $capacity_matrix)
 
-# @benchmark boykov_kolmogorov(1, n, $(xxx.fadjlist), $capacity_matrix)
+@benchmark boykov_kolmogorov(1, n, $(xxx.fadjlist), $residuals)
 
 
 
 @code_warntype LightGraphsFlows.boykov_kolmogorov_impl(xxx, 1, n, capacity_matrix)
 
-@code_warntype boykov_kolmogorov(1, n, xxx.fadjlist, capacity_matrix)
+@code_warntype boykov_kolmogorov(1, n, xxx.fadjlist, residuals)
 
 
 
