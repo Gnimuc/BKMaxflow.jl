@@ -35,9 +35,11 @@ function boykov_kolmogorov(source::Int, sink::Int, neighbors::Vector{Vector{Tupl
         # “growth” stage: search trees S and T grow until they touch giving an s → t path
         # grow S or T to find an augmenting path P from s to t
         P = growth_stage!(source, sink, neighbors, PQ, QP, A, STATUS, PARENT)
+        # @show P
         isempty(P) && break
         # “augmentation” stage: the found path is augmented, search tree(s) break into forest(s)
         flow += augmentation_stage!(neighbors, PQ, QP, P, O, STATUS, PARENT)
+        # @show O
         # “adoption” stage: trees S and T are restored
         adoption_stage!(source, sink, neighbors, PQ, QP, O, A, MARK, STATUS, PARENT)
     end
@@ -46,12 +48,13 @@ end
 
 function growth_stage!(source, sink, neighbors, residualPQ, residualQP, A, STATUS, PARENT)
     TREE(x) = STATUS[x] & (BK_S | BK_T)
-    tree_cap(x, idx) = TREE(x)==BK_S ? residualPQ[idx] : residualQP[idx]
+    # tree_cap(x, idx) = TREE(x)==BK_S ? residualPQ[idx] : residualQP[idx]
     while !isempty(A)
         p = last(A)  # pick an active node p ∈ A ("First-In-First-Out"): enqueue -> queue -> dequeue
         STATUS[p] & BK_ACTIVE == BK_ACTIVE || (pop!(A); continue)  # automatically skip inactive node
         for (q,qᵢ) in neighbors[p]
-            tree_cap(p,qᵢ) > 0 || continue
+            # tree_cap(p,qᵢ) > 0 || continue
+            residualPQ[qᵢ] > 0 || continue
             if TREE(q) == ∅
                 # then add q to search tree as an active node
                 STATUS[q] = STATUS[p]
@@ -79,12 +82,15 @@ function augmentation_stage!(neighbors, residualPQ, residualQP, P, O, STATUS, PA
         end
         Δ > residualPQ[idxs[i]] && (Δ = residualPQ[idxs[i]];)
     end
+    # @show idxs
     # update the residual graph by pushing flow Δ through P
     for i = 1:length(P)-1
         p, q = P[i], P[i+1]
         # residualMatrix = capacityMatrix - flowMatrix
         residualPQ[idxs[i]] -= Δ
+        # @show residualPQ[idxs[i]]
         residualQP[idxs[i]] += Δ
+        # @show residualQP[idxs[i]]
         # for each edge (p,q) in P that becomes saturated
         residualPQ[idxs[i]] == 0 || continue
         if TREE(p) == TREE(q) == BK_S
@@ -101,10 +107,10 @@ end
 
 function adoption_stage!(source, sink, neighbors, residualPQ, residualQP, O, A, MARK, STATUS, PARENT)
     TREE(x) = STATUS[x] & (BK_S | BK_T)
-    tree_cap(x, idx) = TREE(x)==BK_S ? residualPQ[idx] : residualQP[idx]
+    # tree_cap(x, idx) = TREE(x)==BK_S ? residualPQ[idx] : residualQP[idx]
     MARK .= STATUS
     while !isempty(O)
-        @show O
+        # @show O
         # pick an orphan node p ∈ O and remove it from O
         p = pop!(O)
         # find a new valid parent for p among its neighbors
@@ -112,7 +118,8 @@ function adoption_stage!(source, sink, neighbors, residualPQ, residualQP, O, A, 
         for (q,pᵢ) in neighbors[p]
             MARK[q] & BK_ORPHAN == BK_ORPHAN && continue
             TREE(q) == TREE(p) || continue
-            tree_cap(q,pᵢ) > 0 || continue
+            # tree_cap(q,pᵢ) > 0 || continue
+            residualPQ[pᵢ] > 0 || continue
             # the “origin” of q should be either source or sink, it should not originates from orphan
             x = q
             while PARENT[x] ≠ 0
@@ -130,7 +137,8 @@ function adoption_stage!(source, sink, neighbors, residualPQ, residualQP, O, A, 
         has_valid_parent && continue
         for (q,pᵢ) in neighbors[p]
             TREE(q) == TREE(p) || continue
-            tree_cap(q,pᵢ) > 0 && (STATUS[q] |= BK_ACTIVE; unshift!(A, q);)
+            # tree_cap(q,pᵢ) > 0 && (STATUS[q] |= BK_ACTIVE; unshift!(A, q);)
+            residualPQ[pᵢ] > 0 && (STATUS[q] |= BK_ACTIVE; unshift!(A, q);)
             PARENT[q] == p     && (PARENT[q]  = 0        ; unshift!(O, q);)
         end
         # TREE(p) := ∅, A := A - {p}
