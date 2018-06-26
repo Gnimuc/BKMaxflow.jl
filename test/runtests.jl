@@ -18,7 +18,7 @@ pixelFirst, pixelEnd = first(pixelRange), last(pixelRange)
 idx = 0
 for ii in pixelRange
     i = sub2ind(imageDims, ii.I...)
-    neighborRange = CartesianRange(max(pixelFirst, ii-16pixelFirst), min(pixelEnd, ii+16pixelFirst))
+    neighborRange = CartesianRange(max(pixelFirst, ii-10pixelFirst), min(pixelEnd, ii+10pixelFirst))
     neighbor = Tuple{Int,Int}[]
     for jj in neighborRange
         if ii < jj
@@ -64,6 +64,9 @@ a, b, c = LightGraphsFlows.boykov_kolmogorov_impl(xxx, 1, n*n, capacity_matrix)
 aa, cc = boykov_kolmogorov(1, n*n, neighbors, residualPQ, residualQP)
 @test a ≈ aa
 
+a, b, c = LightGraphsFlows.boykov_kolmogorov_impl(xxx, n, 3n, capacity_matrix)
+aa, cc = boykov_kolmogorov(n, 3n, neighbors, residualPQ, residualQP)
+@test a ≈ aa
 
 # @enter boykov_kolmogorov(1, n*n, neighbors, residualPQ, residualQP)
 # @enter LightGraphsFlows.boykov_kolmogorov_impl(xxx, 1, n*n, capacity_matrix)
