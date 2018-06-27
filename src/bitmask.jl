@@ -7,10 +7,6 @@
     BK_ORPHAN            =  0x10,  # node originates from orphan
     BK_S_ACTIVE          =  0x0a,  # BK_S | BK_ACTIVE
     BK_T_ACTIVE          =  0x0c,  # BK_T | BK_ACTIVE
-    BK_S_ORPHAN          =  0x12,  # BK_S | BK_ORPHAN
-    BK_T_ORPHAN          =  0x14,  # BK_T | BK_ORPHAN
-    BK_S_ACTIVE_ORPHAN   =  0x1a,  # BK_S | BK_ACTIVE  | BK_ORPHAN
-    BK_T_ACTIVE_ORPHAN   =  0x1c,  # BK_T | BK_ACTIVE  | BK_ORPHAN
 )
 
 Base.:~(x::BKStatusBits) = ~UInt8(x)
