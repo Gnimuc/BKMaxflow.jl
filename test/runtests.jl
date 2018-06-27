@@ -3,7 +3,7 @@ using LightGraphsFlows
 using Base.Test
 
 
-n = 32
+n = 42
 const lg = LightGraphs
 flow_graph = lg.DiGraph(n*n)
 
@@ -18,7 +18,7 @@ pixelFirst, pixelEnd = first(pixelRange), last(pixelRange)
 idx = 0
 for ii in pixelRange
     i = sub2ind(imageDims, ii.I...)
-    neighborRange = CartesianRange(max(pixelFirst, ii-10pixelFirst), min(pixelEnd, ii+10pixelFirst))
+    neighborRange = CartesianRange(max(pixelFirst, ii-20pixelFirst), min(pixelEnd, ii+20pixelFirst))
     neighbor = Tuple{Int,Int}[]
     for jj in neighborRange
         if ii < jj
