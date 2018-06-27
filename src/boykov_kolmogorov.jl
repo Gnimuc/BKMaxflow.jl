@@ -15,7 +15,7 @@ function PATH(s::Integer, t::Integer, source::Integer, sink::Integer, PARENT::Ve
     return path
 end
 
-function boykov_kolmogorov(source::Int, sink::Int, neighbors::Vector{Vector{Tuple{Int,Int}}}, residualPQ, residualQP)
+function boykov_kolmogorov(source::Int, sink::Int, neighbors::Vector{Dict{Int,Int}}, residualPQ, residualQP)
     # initialize: S = {s}, T = {t},  A = {s,t}, O = ∅
     vertexNum = length(neighbors)
     PARENT = zeros(Int, vertexNum)
@@ -51,7 +51,8 @@ function growth_stage!(source, sink, neighbors, residualPQ, residualQP, A, STATU
     while !isempty(A)
         p = last(A)  # pick an active node p ∈ A ("First-In-First-Out"): enqueue -> queue -> dequeue
         STATUS[p] & BK_ACTIVE == BK_ACTIVE || (pop!(A); continue)  # automatically skip inactive node
-        for (q,qᵢ) in neighbors[p]
+        for nb in neighbors[p]
+            q, qᵢ = nb
             tree_cap = p < q ? (TREE(p)==BK_S ? residualPQ[qᵢ] : residualQP[qᵢ]) : (TREE(p)==BK_S ? residualQP[qᵢ] : residualPQ[qᵢ])
             tree_cap > 0 || continue
             if TREE(q) == ∅
@@ -76,9 +77,7 @@ function augmentation_stage!(neighbors, residualPQ, residualQP, P, O, STATUS, PA
     idxs = zeros(Int,length(P)-1)
     for i = 1:length(P)-1
         p, q = P[i], P[i+1]
-        for (n,nᵢ) in neighbors[p]
-            n == q && (idxs[i] = nᵢ;)
-        end
+        idxs[i] = neighbors[p][q]
         if p < q
             Δ > residualPQ[idxs[i]] && (Δ = residualPQ[idxs[i]];)
         else
@@ -125,7 +124,8 @@ function adoption_stage!(source, sink, neighbors, residualPQ, residualQP, O, A, 
         p = pop!(O)
         # find a new valid parent for p among its neighbors
         has_valid_parent = false
-        for (q,qᵢ) in neighbors[p]
+        for nb in neighbors[p]
+            q, qᵢ = nb
             MARK[q] & BK_ORPHAN == BK_ORPHAN && continue
             TREE(q) == TREE(p) || continue
             tree_cap = q < p ? (TREE(q)==BK_S ? residualPQ[qᵢ] : residualQP[qᵢ]) : (TREE(q)==BK_S ? residualQP[qᵢ] : residualPQ[qᵢ])
