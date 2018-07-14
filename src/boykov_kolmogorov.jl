@@ -22,7 +22,7 @@ function PATH(s, t, i, source, sink, PARENT, INDEX)
     return path, idxs
 end
 
-function boykov_kolmogorov(source::Int, sink::Int, neighbors::Vector{Vector{Tuple{Int,Int}}}, residualPQ, residualQP)
+function boykov_kolmogorov(source::Int, sink::Int, neighbors::Vector{Vector{Tuple{Int,Int}}}, residualGraph::AbstractMatrix)
     # initialize: S = {s}, T = {t},  A = {s,t}, O = ∅
     vertexNum = length(neighbors)
     PARENT = zeros(Int, vertexNum)
@@ -33,8 +33,7 @@ function boykov_kolmogorov(source::Int, sink::Int, neighbors::Vector{Vector{Tupl
     ORPHAN = fill(false, vertexNum)
     A = Int[source, sink]  # this queue could also contains inactive nodes which will be automatically skipped in the growth stage
     O = Int[]
-    PQ = copy(residualPQ)
-    QP = copy(residualQP)
+    residual = copy(residualGraph)
     flow = zero(Float64)
     # Boykov, Yuri, and Vladimir Kolmogorov. "An experimental comparison of min-cut/max-flow
     # algorithms for energy minimization in vision." Pattern Analysis and Machine Intelligence,
@@ -42,23 +41,23 @@ function boykov_kolmogorov(source::Int, sink::Int, neighbors::Vector{Vector{Tupl
     while true
         # “growth” stage: search trees S and T grow until they touch giving an s → t path
         # grow S or T to find an augmenting path P from s to t
-        P, IDX = growth_stage!(source, sink, neighbors, PQ, QP, A, STATUS, PARENT, INDEX)
+        P, IDX = growth_stage!(source, sink, neighbors, residual, A, STATUS, PARENT, INDEX)
         isempty(P) && break
         # “augmentation” stage: the found path is augmented, search tree(s) break into forest(s)
-        flow += augmentation_stage!(neighbors, PQ, QP, P, IDX, O, STATUS, PARENT, INDEX)
+        flow += augmentation_stage!(neighbors, residual, P, IDX, O, STATUS, PARENT, INDEX)
         # “adoption” stage: trees S and T are restored
-        adoption_stage!(source, sink, neighbors, PQ, QP, O, A, ORPHAN, STATUS, PARENT, INDEX)
+        adoption_stage!(source, sink, neighbors, residual, O, A, ORPHAN, STATUS, PARENT, INDEX)
     end
     return flow, STATUS
 end
 
-function growth_stage!(source, sink, neighbors, residualPQ, residualQP, A, STATUS, PARENT, INDEX)
+function growth_stage!(source, sink, neighbors, residual, A, STATUS, PARENT, INDEX)
     TREE(x) = STATUS[x] & (BK_S | BK_T)
     while !isempty(A)
         p = last(A)  # pick an active node p ∈ A ("First-In-First-Out"): enqueue -> queue -> dequeue
         STATUS[p] & BK_ACTIVE == BK_ACTIVE || (pop!(A); continue)  # automatically skip inactive node
-        for (q,qᵢ) in neighbors[p]
-            tree_cap = p < q ? (TREE(p)==BK_S ? residualPQ[qᵢ] : residualQP[qᵢ]) : (TREE(p)==BK_S ? residualQP[qᵢ] : residualPQ[qᵢ])
+        @inbounds for (q,qᵢ) in neighbors[p]
+            tree_cap = TREE(p)==BK_S ? (p < q ? residual[1,qᵢ] : residual[2,qᵢ]) : (p < q ? residual[2,qᵢ] : residual[1,qᵢ])
             tree_cap > 0 || continue
             if TREE(q) == ∅
                 # then add q to search tree as an active node
@@ -76,29 +75,29 @@ function growth_stage!(source, sink, neighbors, residualPQ, residualQP, A, STATU
     return Int[], Int[]
 end
 
-function augmentation_stage!(neighbors, residualPQ, residualQP, P, IDX, O, STATUS, PARENT, INDEX)
+function augmentation_stage!(neighbors, residual, P, IDX, O, STATUS, PARENT, INDEX)
     TREE(x) = STATUS[x] & (BK_S | BK_T)
     # find the bottleneck capacity Δ on P
     Δ = Inf
-    for i = 1:length(P)-1
+    @inbounds for i = 1:length(P)-1
         p, q = P[i], P[i+1]
         if p < q
-            Δ > residualPQ[IDX[i]] && (Δ = residualPQ[IDX[i]];)
+            Δ > residual[1,IDX[i]] && (Δ = residual[1,IDX[i]];)
         else
-            Δ > residualQP[IDX[i]] && (Δ = residualQP[IDX[i]];)
+            Δ > residual[2,IDX[i]] && (Δ = residual[2,IDX[i]];)
         end
     end
     # update the residual graph by pushing flow Δ through P
-    for i = 1:length(P)-1
+    @inbounds for i = 1:length(P)-1
         p, q = P[i], P[i+1]
         if p < q
-            residualPQ[IDX[i]] -= Δ
-            residualQP[IDX[i]] += Δ
-            residualPQ[IDX[i]] == 0 || continue
+            residual[1,IDX[i]] -= Δ
+            residual[2,IDX[i]] += Δ
+            residual[1,IDX[i]] == 0 || continue
         else
-            residualQP[IDX[i]] -= Δ
-            residualPQ[IDX[i]] += Δ
-            residualQP[IDX[i]] == 0 || continue
+            residual[2,IDX[i]] -= Δ
+            residual[1,IDX[i]] += Δ
+            residual[2,IDX[i]] == 0 || continue
         end
         if TREE(p) == TREE(q) == BK_S
             PARENT[q] = 0
@@ -114,7 +113,7 @@ function augmentation_stage!(neighbors, residualPQ, residualQP, P, IDX, O, STATU
     return Δ
 end
 
-function adoption_stage!(source, sink, neighbors, residualPQ, residualQP, O, A, ORPHAN, STATUS, PARENT, INDEX)
+function adoption_stage!(source, sink, neighbors, residual, O, A, ORPHAN, STATUS, PARENT, INDEX)
     TREE(x) = STATUS[x] & (BK_S | BK_T)
     fill!(ORPHAN, false)
     while !isempty(O)
@@ -122,10 +121,10 @@ function adoption_stage!(source, sink, neighbors, residualPQ, residualQP, O, A, 
         p = pop!(O)
         # find a new valid parent for p among its neighbors
         has_valid_parent = false
-        for (q,qᵢ) in neighbors[p]
+        @inbounds for (q,qᵢ) in neighbors[p]
             ORPHAN[q] && continue
             TREE(q) == TREE(p) || continue
-            tree_cap = q < p ? (TREE(q)==BK_S ? residualPQ[qᵢ] : residualQP[qᵢ]) : (TREE(q)==BK_S ? residualQP[qᵢ] : residualPQ[qᵢ])
+            tree_cap = TREE(p)==BK_S ? (q < p ? residual[1,qᵢ] : residual[2,qᵢ]) : (q < p ? residual[2,qᵢ] : residual[1,qᵢ])
             tree_cap > 0 || continue
             # the “origin” of q should be either source or sink, it should not originates from orphan
             x = q
@@ -143,9 +142,9 @@ function adoption_stage!(source, sink, neighbors, residualPQ, residualQP, O, A, 
             end
         end
         has_valid_parent && continue
-        for (q,qᵢ) in neighbors[p]
+        @inbounds for (q,qᵢ) in neighbors[p]
             TREE(q) == TREE(p) || continue
-            tree_cap = q < p ? (TREE(q)==BK_S ? residualPQ[qᵢ] : residualQP[qᵢ]) : (TREE(q)==BK_S ? residualQP[qᵢ] : residualPQ[qᵢ])
+            tree_cap = TREE(p)==BK_S ? (q < p ? residual[1,qᵢ] : residual[2,qᵢ]) : (q < p ? residual[2,qᵢ] : residual[1,qᵢ])
             tree_cap > 0   && (STATUS[q] |= BK_ACTIVE; unshift!(A, q);)
             PARENT[q] == p && (PARENT[q] = 0; INDEX[q] = 0; unshift!(O, q);)
         end

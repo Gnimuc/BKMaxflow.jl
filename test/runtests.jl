@@ -3,15 +3,14 @@ using LightGraphsFlows
 using Base.Test
 
 
-n = 42
+n = 128
 const lg = LightGraphs
 flow_graph = lg.DiGraph(n*n)
 
 imageDims = (n,n)
 
 capacity_matrix = zeros(n*n,n*n)
-residualPQ = Float64[]
-residualQP = Float64[]
+residualGraph = Float64[]
 neighbors = Vector{Vector{Tuple{Int,Int}}}(n*n)
 pixelRange = CartesianRange(imageDims)
 pixelFirst, pixelEnd = first(pixelRange), last(pixelRange)
@@ -32,8 +31,7 @@ for ii in pixelRange
             capacity_matrix[j,i] = vb
             # bk
             idx += 1
-            push!(residualPQ, vf)
-            push!(residualQP, vb)
+            push!(residualGraph, vf, vb)
             push!(neighbor, (j,idx))
         end
     end
@@ -60,19 +58,21 @@ lg.neighbors(xxx, 1)
 
 lg.neighbors(flow_graph, 2)
 
+residualGraph = reshape(residualGraph, 2, :)
+
 a, b, c = LightGraphsFlows.boykov_kolmogorov_impl(xxx, 1, n*n, capacity_matrix)
-aa, cc = boykov_kolmogorov(1, n*n, neighbors, residualPQ, residualQP)
+aa, cc = boykov_kolmogorov(1, n*n, neighbors, residualGraph)
 @test a ≈ aa
 
 a, b, c = LightGraphsFlows.boykov_kolmogorov_impl(xxx, n, 3n, capacity_matrix)
-aa, cc = boykov_kolmogorov(n, 3n, neighbors, residualPQ, residualQP)
+aa, cc = boykov_kolmogorov(n, 3n, neighbors, residualGraph)
 @test a ≈ aa
 
 # @enter boykov_kolmogorov(1, n*n, neighbors, residualPQ, residualQP)
 # @enter LightGraphsFlows.boykov_kolmogorov_impl(xxx, 1, n*n, capacity_matrix)
 
 Profile.clear()
-@profiler boykov_kolmogorov(1, n*n, neighbors, residualPQ, residualQP)
+@profiler boykov_kolmogorov(1, n*n, neighbors, residualGraph)
 
 Profile.clear()
 @profiler LightGraphsFlows.boykov_kolmogorov_impl(xxx, 1, n*n, capacity_matrix)
@@ -82,12 +82,14 @@ using BenchmarkTools
 
 @benchmark LightGraphsFlows.boykov_kolmogorov_impl($xxx, 1, n*n, $capacity_matrix)
 
-@benchmark boykov_kolmogorov(1, n*n, $neighbors, $residualPQ, $residualQP)
+@benchmark boykov_kolmogorov(1, n*n, $neighbors, $residualGraph)
 
-# @benchmark boykov_kolmogorov(1, n, $(xxx.fadjlist), $residuals)
+@benchmark boykov_kolmogorov(1, n*n, $neighbors, $residualGraph)
+
+@benchmark boykov_kolmogorov(1, n*n, $neighbors, $residualGraph)
 
 
 
 @code_warntype LightGraphsFlows.boykov_kolmogorov_impl(xxx, 1, n, capacity_matrix)
 
-@code_warntype boykov_kolmogorov(1, n*n, neighbors, residualPQ, residualQP)
+@code_warntype boykov_kolmogorov(1, n*n, neighbors, residualGraph)
