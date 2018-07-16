@@ -1,15 +1,13 @@
 # The Boykov-Kolmogorov Maxflow Algorithm
-
 [![Build Status](https://travis-ci.org/Gnimuc/BKMaxflow.jl.svg?branch=master)](https://travis-ci.org/Gnimuc/BKMaxflow.jl)
 [![Build status](https://ci.appveyor.com/api/projects/status/y185yw848ln0u405/branch/master?svg=true)](https://ci.appveyor.com/project/Gnimuc/bkmaxflow-jl/branch/master)
 [![codecov.io](http://codecov.io/github/Gnimuc/BKMaxflow.jl/coverage.svg?branch=master)](http://codecov.io/github/Gnimuc/BKMaxflow.jl?branch=master)
 [![Coverage Status](https://coveralls.io/repos/github/Gnimuc/BKMaxflow.jl/badge.svg?branch=master)](https://coveralls.io/github/Gnimuc/BKMaxflow.jl?branch=master)
 
 ## Installation
-
 `Pkg.clone("https://github.com/Gnimuc/BKMaxflow.jl.git")`
 
-## Quick start:
+## Quick Start
 ### Julia API
 ```julia
 using BKMaxflow

@@ -1,7 +1,5 @@
 # Automatically generated using Clang.jl wrap_c, version 0.0.0
 
-using Compat
-
 # begin enum bk_termtype
 const bk_termtype = UInt32
 const SOURCE = (UInt32)(0)
