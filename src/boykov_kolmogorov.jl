@@ -22,7 +22,7 @@ function PATH(s, t, i, source, sink, PARENT, INDEX)
     return path, idxs
 end
 
-function boykov_kolmogorov(source::Int, sink::Int, neighbors::Vector{Vector{Tuple{Int,Int}}}, residualGraph::AbstractMatrix)
+function boykov_kolmogorov(source::Int, sink::Int, neighbors::Vector{Vector{Tuple{Int,Int}}}, weights::AbstractMatrix)
     # initialize: S = {s}, T = {t},  A = {s,t}, O = ∅
     vertexNum = length(neighbors)
     PARENT = zeros(Int, vertexNum)
@@ -33,7 +33,7 @@ function boykov_kolmogorov(source::Int, sink::Int, neighbors::Vector{Vector{Tupl
     ORPHAN = fill(false, vertexNum)
     A = Int[source, sink]  # this queue could also contains inactive nodes which will be automatically skipped in the growth stage
     O = Int[]
-    residual = copy(residualGraph)
+    residual = copy(weights)
     flow = zero(Float64)
     # Boykov, Yuri, and Vladimir Kolmogorov. "An experimental comparison of min-cut/max-flow
     # algorithms for energy minimization in vision." Pattern Analysis and Machine Intelligence,

@@ -1,95 +1,55 @@
 using BKMaxflow
-using LightGraphsFlows
 using Base.Test
 
+# Julia API
+weights, neighbors = create_graph(JuliaImpl{Float64,Int}, 4)
 
-n = 128
-const lg = LightGraphs
-flow_graph = lg.DiGraph(n*n)
+add_edge!(weights, neighbors, 1, 2, 1., 1.)
+add_edge!(weights, neighbors, 1, 3, 2., 2.)
+add_edge!(weights, neighbors, 2, 3, 3., 4.)
+add_edge!(weights, neighbors, 2, 4, 5., 5.)
+add_edge!(weights, neighbors, 3, 4, 6., 6.)
 
-imageDims = (n,n)
+w = reshape(weights, 2, :)
+flow, label = boykov_kolmogorov(1, 4, neighbors, w)
+@test flow == 3
+@test label[2] == label[3] == BK_T
 
-capacity_matrix = zeros(n*n,n*n)
-residualGraph = Float64[]
-neighbors = Vector{Vector{Tuple{Int,Int}}}(n*n)
-pixelRange = CartesianRange(imageDims)
-pixelFirst, pixelEnd = first(pixelRange), last(pixelRange)
-idx = 0
-for ii in pixelRange
-    i = sub2ind(imageDims, ii.I...)
-    neighborRange = CartesianRange(max(pixelFirst, ii-5pixelFirst), min(pixelEnd, ii+5pixelFirst))
-    neighbor = Tuple{Int,Int}[]
-    for jj in neighborRange
-        if ii < jj
-            j = sub2ind(imageDims, jj.I...)
-            # lg
-            lg.add_edge!(flow_graph, i, j)
-            lg.add_edge!(flow_graph, j, i)
-            vf = 100*rand()
-            vb = 100*rand()
-            capacity_matrix[i,j] = vf
-            capacity_matrix[j,i] = vb
-            # bk
-            idx += 1
-            push!(residualGraph, vf, vb)
-            push!(neighbor, (j,idx))
-        end
-    end
-    neighbors[i] = neighbor
-end
+# C API
+# low-level
+err = Ref{bk_error}(C_NULL)
 
-for q in eachindex(neighbors)
-    for (p,idx) in neighbors[q]
-        q < p && push!(neighbors[p], (q,idx))
-    end
-end
+g = bk_create_graph_double(2, 1, err[])
 
-neighbors
+bk_add_node_double(g, 1, err[])
+bk_add_node_double(g, 1, err[])
 
-xxx = lg.DiGraph(lg.Graph(flow_graph))
+bk_add_tweights_double(g, 0, 1., 5., err[])
+bk_add_tweights_double(g, 1, 2., 6., err[])
 
-# for i in eachindex(neighbors)
-#     nn = [n[1] for n in neighbors[i]]
-#     @show nn
-#     @show lg.neighbors(xxx,i)
-# end
+bk_add_edge_double(g, 0, 1, 3., 4., err[])
 
-lg.neighbors(xxx, 1)
+@test bk_maxflow_double(g, false, err[]) == 3
 
-lg.neighbors(flow_graph, 2)
+@test bk_what_segment_double(g, 0, err[]) == 1  # sink
+@test bk_what_segment_double(g, 1, err[]) == 1  # sink
 
-residualGraph = reshape(residualGraph, 2, :)
+bk_delete_graph_double(g)
 
-a, b, c = LightGraphsFlows.boykov_kolmogorov_impl(xxx, 1, n*n, capacity_matrix)
-aa, cc = boykov_kolmogorov(1, n*n, neighbors, residualGraph)
-@test a ≈ aa
+# high-level
+g = create_graph(CImpl{Cdouble}, 2, 1)
 
-a, b, c = LightGraphsFlows.boykov_kolmogorov_impl(xxx, n, 3n, capacity_matrix)
-aa, cc = boykov_kolmogorov(n, 3n, neighbors, residualGraph)
-@test a ≈ aa
+add_node(CImpl{Cdouble}, g, 1)
+add_node(CImpl{Cdouble}, g, 1)
 
-# @enter boykov_kolmogorov(1, n*n, neighbors, residualPQ, residualQP)
-# @enter LightGraphsFlows.boykov_kolmogorov_impl(xxx, 1, n*n, capacity_matrix)
+add_tweights(CImpl, g, 0, 1., 5.)
+add_tweights(CImpl, g, 1, 2., 6.)
 
-Profile.clear()
-@profiler boykov_kolmogorov(1, n*n, neighbors, residualGraph)
+add_edge(CImpl, g, 0, 1, 3., 4.)
 
-Profile.clear()
-@profiler LightGraphsFlows.boykov_kolmogorov_impl(xxx, 1, n*n, capacity_matrix)
+@test maxflow(CImpl{Cdouble}, g) == 3
 
+@test what_segment(CImpl{Cdouble}, g, 0) == 1  # sink
+@test what_segment(CImpl{Cdouble}, g, 1) == 1  # sink
 
-using BenchmarkTools
-
-@benchmark LightGraphsFlows.boykov_kolmogorov_impl($xxx, 1, n*n, $capacity_matrix)
-
-@benchmark boykov_kolmogorov(1, n*n, $neighbors, $residualGraph)
-
-@benchmark boykov_kolmogorov(1, n*n, $neighbors, $residualGraph)
-
-@benchmark boykov_kolmogorov(1, n*n, $neighbors, $residualGraph)
-
-
-
-@code_warntype LightGraphsFlows.boykov_kolmogorov_impl(xxx, 1, n, capacity_matrix)
-
-@code_warntype boykov_kolmogorov(1, n*n, neighbors, residualGraph)
+delete_graph(CImpl{Cdouble}, g)

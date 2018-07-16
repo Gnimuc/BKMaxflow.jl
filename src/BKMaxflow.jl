@@ -8,10 +8,10 @@ include("boykov_kolmogorov.jl")
 export boykov_kolmogorov
 
 abstract type AbstractBKMaxflow{Tv,Ti} end
-struct JuliaBKMaxflow{Tv<:Real,Ti<:Integer} <: AbstractBKMaxflow{Tv,Ti} end
-struct CBKMaxflow{Tv<:Real,Ti<:Integer} <: AbstractBKMaxflow{Tv,Ti} end
+struct JuliaImpl{Tv<:Real,Ti<:Integer} <: AbstractBKMaxflow{Tv,Ti} end
+struct CImpl{Tv<:Real} <: AbstractBKMaxflow{Tv,Integer} end
 
-function create_graph(::Type{JuliaBKMaxflow{Tv,Ti}}, vertexNum::Integer) where {Tv<:Real,Ti<:Integer}
+function create_graph(::Type{JuliaImpl{Tv,Ti}}, vertexNum::Integer) where {Tv<:Real,Ti<:Integer}
     weights = Vector{Tv}()
     neighbors = [Vector{Tuple{Ti,Ti}}() for i = 1:vertexNum]
     return weights, neighbors
@@ -33,7 +33,10 @@ function add_edge!(weights::AbstractVector{Tv}, neighbors::AbstractVector{Vector
     end
 end
 
-include("c_wrapper.jl")
+export AbstractBKMaxflow, JuliaImpl, CImpl
 export create_graph, add_edge!
+
+include("c_wrapper.jl")
+
 
 end # module
