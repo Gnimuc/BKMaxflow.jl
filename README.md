@@ -1,9 +1,12 @@
-# The Boykov-Kolmogorov Max-flow Algorithm
+# The Boykov-Kolmogorov Maxflow Algorithm
 
-[![Project Status: Abandoned – Initial development has started, but there has not yet been a stable, usable release; the project has been abandoned and the author(s) do not intend on continuing development.](http://www.repostatus.org/badges/latest/abandoned.svg)](http://www.repostatus.org/#abandoned) bacause there has already been a BK-maxflow method in LightGraphs.jl.
+[![Build Status](https://travis-ci.org/Gnimuc/BKMaxflow.jl.svg?branch=master)](https://travis-ci.org/Gnimuc/BKMaxflow.jl)
+[![Build status](https://ci.appveyor.com/api/projects/status/y185yw848ln0u405/branch/master?svg=true)](https://ci.appveyor.com/project/Gnimuc/bkmaxflow-jl/branch/master)
+[![codecov.io](http://codecov.io/github/Gnimuc/BKMaxflow.jl/coverage.svg?branch=master)](http://codecov.io/github/Gnimuc/BKMaxflow.jl?branch=master)
+[![Coverage Status](https://coveralls.io/repos/github/Gnimuc/BKMaxflow.jl/badge.svg?branch=master)](https://coveralls.io/github/Gnimuc/BKMaxflow.jl?branch=master)
 
-Currently, the algorithm is fully implemented in Julia. If you are new to BK-Maxflow algorithm and stumped by the C++ source code [here](http://vision.csd.uwo.ca/code/), you may find this Julia version of the algorithm is much simpler. <strike>I also plan to add an interface by which users can alternatively choose which version they prefer to use in the future.</strike>
- 
+The package provides one implementation of the **[Hungarian algorithm](https://en.wikipedia.org/wiki/Hungarian_algorithm)**(*Kuhn-Munkres algorithm*) based on its matrix interpretation. This implementation uses a sparse matrix to keep tracking those marked zeros, so it costs less time and memory than [Munkres.jl](https://github.com/FugroRoames/Munkres.jl). Benchmark details can be found [here](https://github.com/Gnimuc/Hungarian.jl/tree/master/benchmark).
+
 ## Installation
 
 `Pkg.clone("https://github.com/Gnimuc/BKMaxflow.jl.git")`
@@ -19,7 +22,7 @@ flow_edges = [ (1,2,10),(1,3,5),(1,4,15),(2,3,4),(2,5,9),
                (2,6,15),(3,4,4),(3,6,8),(4,7,16),(5,6,15),
                (5,8,10),(6,7,15),(6,8,10),(7,3,6),(7,8,10)
              ];
-             
+
 capacity_matrix = zeros(Int ,nv(flow_graph) ,nv(flow_graph));
 
 for e in flow_edges
