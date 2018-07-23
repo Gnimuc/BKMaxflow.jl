@@ -1,0 +1,7 @@
+authors = ["Gnimuc <qiyupei@gmail.com>"]
+name = "BKMaxflow"
+uuid = "7d36e1c2-8e6d-11e8-39fb-ab2b1a405295"
+version = "0.1.0"
+
+[deps]
+BinaryProvider = "b99e7846-7c00-51b0-8f62-c81ae34c0232"
