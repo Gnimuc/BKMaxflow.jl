@@ -51,6 +51,9 @@ function boykov_kolmogorov(source::Int, sink::Int, neighbors::Vector{Vector{Tupl
     return flow, STATUS
 end
 
+boykov_kolmogorov(source, sink, neighbors, weights::AbstractVector) = boykov_kolmogorov(source, sink, neighbors, reshape(weights, 2, :))
+
+
 function growth_stage!(source, sink, neighbors, residual, A, STATUS, PARENT, INDEX)
     TREE(x) = STATUS[x] & (BK_S | BK_T)
     while !isempty(A)
