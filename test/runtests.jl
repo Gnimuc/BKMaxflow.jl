@@ -1,5 +1,5 @@
 using BKMaxflow
-using Base.Test
+using Test
 
 # Julia API
 weights, neighbors = create_graph(JuliaImpl{Float64,Int}, 4)

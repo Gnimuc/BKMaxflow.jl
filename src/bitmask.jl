@@ -9,6 +9,8 @@
     BK_T_ACTIVE          =  0x0c,  # BK_T | BK_ACTIVE
 )
 
+Base.convert(::Type{BKStatusBits}, x::UInt8) = BKStatusBits(x)
+
 Base.:~(x::BKStatusBits) = ~UInt8(x)
 
 Base.:|(x::UInt8, y::BKStatusBits) = x | UInt8(y)

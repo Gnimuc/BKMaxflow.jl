@@ -5,12 +5,12 @@ function PATH(s, t, i, source, sink, PARENT, INDEX)
     idxs = Int[]
     sᵢ = tᵢ = i
     while s != source
-        unshift!(path, s)
-        unshift!(idxs, sᵢ)
+        pushfirst!(path, s)
+        pushfirst!(idxs, sᵢ)
         s, sᵢ = PARENT[s], INDEX[s]
     end
-    unshift!(path, s)
-    unshift!(idxs, sᵢ)
+    pushfirst!(path, s)
+    pushfirst!(idxs, sᵢ)
     pop!(idxs)  # pop i out since we gonna push it again
     while t != sink
         push!(path, t)
@@ -66,7 +66,7 @@ function growth_stage!(source, sink, neighbors, residual, A, STATUS, PARENT, IND
                 # then add q to search tree as an active node
                 STATUS[q] = STATUS[p]
                 PARENT[q] = p
-                unshift!(A, q)  # "First-In-First-Out": enqueue -> queue -> dequeue
+                pushfirst!(A, q)  # "First-In-First-Out": enqueue -> queue -> dequeue
                 INDEX[q] = qᵢ   # cache index for referencing residual in augmentation stage
             end
             TREE(q)≠∅ && TREE(q)≠TREE(p) && return TREE(p)==BK_S ? PATH(p,q,qᵢ,source,sink,PARENT,INDEX) : PATH(q,p,qᵢ,source,sink,PARENT,INDEX)
@@ -104,12 +104,12 @@ function augmentation_stage!(neighbors, residual, P, IDX, O, STATUS, PARENT, IND
         end
         if TREE(p) == TREE(q) == BK_S
             PARENT[q] = 0
-            unshift!(O, q)
+            pushfirst!(O, q)
             INDEX[q] = 0  # clean up index cache
         end
         if TREE(p) == TREE(q) == BK_T
             PARENT[p] = 0
-            unshift!(O, p)
+            pushfirst!(O, p)
             INDEX[p] = 0  # clean up index cache
         end
     end
@@ -148,8 +148,8 @@ function adoption_stage!(source, sink, neighbors, residual, O, A, ORPHAN, STATUS
         @inbounds for (q,qᵢ) in neighbors[p]
             TREE(q) == TREE(p) || continue
             tree_cap = TREE(p)==BK_S ? (q < p ? residual[1,qᵢ] : residual[2,qᵢ]) : (q < p ? residual[2,qᵢ] : residual[1,qᵢ])
-            tree_cap > 0   && (STATUS[q] |= BK_ACTIVE; unshift!(A, q);)
-            PARENT[q] == p && (PARENT[q] = 0; INDEX[q] = 0; unshift!(O, q);)
+            tree_cap > 0   && (STATUS[q] |= BK_ACTIVE; pushfirst!(A, q);)
+            PARENT[q] == p && (PARENT[q] = 0; INDEX[q] = 0; pushfirst!(O, q);)
         end
         # TREE(p) := ∅, A := A - {p}
         STATUS[p] = BK_FREE   # note that this also marks p as inactive node

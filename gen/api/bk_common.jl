@@ -6,22 +6,22 @@ const SOURCE = (UInt32)(0)
 const SINK = (UInt32)(1)
 # end enum bk_termtype
 
-error = Void
+error = Cvoid
 
-const bk_error = Ptr{Void}
+const bk_error = Ptr{Cvoid}
 
-graph_int = Void
+graph_int = Cvoid
 
-const bk_graph_int = Ptr{Void}
+const bk_graph_int = Ptr{Cvoid}
 
-graph_short = Void
+graph_short = Cvoid
 
-const bk_graph_short = Ptr{Void}
+const bk_graph_short = Ptr{Cvoid}
 
-graph_float = Void
+graph_float = Cvoid
 
-const bk_graph_float = Ptr{Void}
+const bk_graph_float = Ptr{Cvoid}
 
-graph_double = Void
+graph_double = Cvoid
 
-const bk_graph_double = Ptr{Void}
+const bk_graph_double = Ptr{Cvoid}

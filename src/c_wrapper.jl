@@ -71,7 +71,7 @@ end
     end
 end
 
-@generated function delete_graph(::Type{CImpl{Tv}}, graph::Ptr{Void}) where {Tv<:Real}
+@generated function delete_graph(::Type{CImpl{Tv}}, graph::Ptr{Cvoid}) where {Tv<:Real}
     if Tv == Cint
         return :(bk_delete_graph_int(graph))
     elseif Tv == Cshort
@@ -83,7 +83,7 @@ end
     end
 end
 
-@generated function add_node(::Type{CImpl{Tv}}, graph::Ptr{Void}, num::Integer=1) where {Tv<:Real}
+@generated function add_node(::Type{CImpl{Tv}}, graph::Ptr{Cvoid}, num::Integer=1) where {Tv<:Real}
     if Tv == Cint
         return quote
             err = Ref{bk_error}(C_NULL)
@@ -115,7 +115,7 @@ end
     end
 end
 
-@generated function add_tweights(::Type{CImpl}, graph::Ptr{Void}, id::Integer, cap_source::Tv, cap_sink::Tv) where {Tv<:Real}
+@generated function add_tweights(::Type{CImpl}, graph::Ptr{Cvoid}, id::Integer, cap_source::Tv, cap_sink::Tv) where {Tv<:Real}
     if Tv == Cint
         return quote
             err = Ref{bk_error}(C_NULL)
@@ -143,7 +143,7 @@ end
     end
 end
 
-@generated function add_edge(::Type{CImpl}, graph::Ptr{Void}, i::Integer, j::Integer, cap::Tv, rev_cap::Tv) where {Tv<:Real}
+@generated function add_edge(::Type{CImpl}, graph::Ptr{Cvoid}, i::Integer, j::Integer, cap::Tv, rev_cap::Tv) where {Tv<:Real}
     if Tv == Cint
         return quote
             err = Ref{bk_error}(C_NULL)
@@ -171,7 +171,7 @@ end
     end
 end
 
-@generated function maxflow(::Type{CImpl{Tv}}, graph::Ptr{Void}, reuse_trees::Bool=false) where {Tv<:Real}
+@generated function maxflow(::Type{CImpl{Tv}}, graph::Ptr{Cvoid}, reuse_trees::Bool=false) where {Tv<:Real}
     if Tv == Cint
         return quote
             err = Ref{bk_error}(C_NULL)
@@ -203,7 +203,7 @@ end
     end
 end
 
-@generated function what_segment(::Type{CImpl{Tv}}, graph::Ptr{Void}, i::Integer) where {Tv<:Real}
+@generated function what_segment(::Type{CImpl{Tv}}, graph::Ptr{Cvoid}, i::Integer) where {Tv<:Real}
     if Tv == Cint
         return quote
             err = Ref{bk_error}(C_NULL)

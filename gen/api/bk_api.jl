@@ -7,7 +7,7 @@ function bk_error_message(error)
 end
 
 function bk_error_release(error)
-    ccall((:bk_error_release, libbkmaxflow), Void, (bk_error,), error)
+    ccall((:bk_error_release, libbkmaxflow), Cvoid, (bk_error,), error)
 end
 
 function bk_create_graph_int(node_num_max, edge_num_max, error)
@@ -27,19 +27,19 @@ function bk_create_graph_double(node_num_max, edge_num_max, error)
 end
 
 function bk_delete_graph_int(g)
-    ccall((:bk_delete_graph_int, libbkmaxflow), Void, (bk_graph_int,), g)
+    ccall((:bk_delete_graph_int, libbkmaxflow), Cvoid, (bk_graph_int,), g)
 end
 
 function bk_delete_graph_short(g)
-    ccall((:bk_delete_graph_short, libbkmaxflow), Void, (bk_graph_short,), g)
+    ccall((:bk_delete_graph_short, libbkmaxflow), Cvoid, (bk_graph_short,), g)
 end
 
 function bk_delete_graph_float(g)
-    ccall((:bk_delete_graph_float, libbkmaxflow), Void, (bk_graph_float,), g)
+    ccall((:bk_delete_graph_float, libbkmaxflow), Cvoid, (bk_graph_float,), g)
 end
 
 function bk_delete_graph_double(g)
-    ccall((:bk_delete_graph_double, libbkmaxflow), Void, (bk_graph_double,), g)
+    ccall((:bk_delete_graph_double, libbkmaxflow), Cvoid, (bk_graph_double,), g)
 end
 
 function bk_add_node_int(g, num, error)
@@ -59,35 +59,35 @@ function bk_add_node_double(g, num, error)
 end
 
 function bk_add_tweights_int(g, id, cap_source, cap_sink, error)
-    ccall((:bk_add_tweights_int, libbkmaxflow), Void, (bk_graph_int, Cint, Cint, Cint, Ptr{bk_error}), g, id, cap_source, cap_sink, error)
+    ccall((:bk_add_tweights_int, libbkmaxflow), Cvoid, (bk_graph_int, Cint, Cint, Cint, Ptr{bk_error}), g, id, cap_source, cap_sink, error)
 end
 
 function bk_add_tweights_short(g, id, cap_source, cap_sink, error)
-    ccall((:bk_add_tweights_short, libbkmaxflow), Void, (bk_graph_short, Cint, Cint, Cint, Ptr{bk_error}), g, id, cap_source, cap_sink, error)
+    ccall((:bk_add_tweights_short, libbkmaxflow), Cvoid, (bk_graph_short, Cint, Cint, Cint, Ptr{bk_error}), g, id, cap_source, cap_sink, error)
 end
 
 function bk_add_tweights_float(g, id, cap_source, cap_sink, error)
-    ccall((:bk_add_tweights_float, libbkmaxflow), Void, (bk_graph_float, Cint, Cfloat, Cfloat, Ptr{bk_error}), g, id, cap_source, cap_sink, error)
+    ccall((:bk_add_tweights_float, libbkmaxflow), Cvoid, (bk_graph_float, Cint, Cfloat, Cfloat, Ptr{bk_error}), g, id, cap_source, cap_sink, error)
 end
 
 function bk_add_tweights_double(g, id, cap_source, cap_sink, error)
-    ccall((:bk_add_tweights_double, libbkmaxflow), Void, (bk_graph_double, Cint, Cdouble, Cdouble, Ptr{bk_error}), g, id, cap_source, cap_sink, error)
+    ccall((:bk_add_tweights_double, libbkmaxflow), Cvoid, (bk_graph_double, Cint, Cdouble, Cdouble, Ptr{bk_error}), g, id, cap_source, cap_sink, error)
 end
 
 function bk_add_edge_int(g, i, j, cap, rev_cap, error)
-    ccall((:bk_add_edge_int, libbkmaxflow), Void, (bk_graph_int, Cint, Cint, Cint, Cint, Ptr{bk_error}), g, i, j, cap, rev_cap, error)
+    ccall((:bk_add_edge_int, libbkmaxflow), Cvoid, (bk_graph_int, Cint, Cint, Cint, Cint, Ptr{bk_error}), g, i, j, cap, rev_cap, error)
 end
 
 function bk_add_edge_short(g, i, j, cap, rev_cap, error)
-    ccall((:bk_add_edge_short, libbkmaxflow), Void, (bk_graph_short, Cint, Cint, Int16, Int16, Ptr{bk_error}), g, i, j, cap, rev_cap, error)
+    ccall((:bk_add_edge_short, libbkmaxflow), Cvoid, (bk_graph_short, Cint, Cint, Int16, Int16, Ptr{bk_error}), g, i, j, cap, rev_cap, error)
 end
 
 function bk_add_edge_float(g, i, j, cap, rev_cap, error)
-    ccall((:bk_add_edge_float, libbkmaxflow), Void, (bk_graph_float, Cint, Cint, Cfloat, Cfloat, Ptr{bk_error}), g, i, j, cap, rev_cap, error)
+    ccall((:bk_add_edge_float, libbkmaxflow), Cvoid, (bk_graph_float, Cint, Cint, Cfloat, Cfloat, Ptr{bk_error}), g, i, j, cap, rev_cap, error)
 end
 
 function bk_add_edge_double(g, i, j, cap, rev_cap, error)
-    ccall((:bk_add_edge_double, libbkmaxflow), Void, (bk_graph_double, Cint, Cint, Cdouble, Cdouble, Ptr{bk_error}), g, i, j, cap, rev_cap, error)
+    ccall((:bk_add_edge_double, libbkmaxflow), Cvoid, (bk_graph_double, Cint, Cint, Cdouble, Cdouble, Ptr{bk_error}), g, i, j, cap, rev_cap, error)
 end
 
 function bk_maxflow_int(g, reuse_trees, error)
