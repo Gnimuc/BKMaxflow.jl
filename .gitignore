@@ -5,3 +5,4 @@
 deps/usr
 deps/deps.jl
 *.log
+Manifest.toml
