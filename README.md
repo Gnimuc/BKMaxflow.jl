@@ -4,8 +4,21 @@
 [![codecov.io](http://codecov.io/github/Gnimuc/BKMaxflow.jl/coverage.svg?branch=master)](http://codecov.io/github/Gnimuc/BKMaxflow.jl?branch=master)
 [![Coverage Status](https://coveralls.io/repos/github/Gnimuc/BKMaxflow.jl/badge.svg?branch=master)](https://coveralls.io/github/Gnimuc/BKMaxflow.jl?branch=master)
 
+This package provides a wrapper for [Vladimir Kolmogorov's Max-flow/min-cut library](http://www.csd.uwo.ca/faculty/yuri/Abstracts/pami04-abs.shtml) and a pure Julia implementation of the algorithm. The wrapper will automatically download those precompiled binaries(**note the [maxflow-v3.01](http://vision.csd.uwo.ca/code/maxflow-v3.01.zip) library has its own lisense, you may need to take a look before using it**) from [BKMaxflowBuilder](https://github.com/Gnimuc/BKMaxflowBuilder/releases) and it is much faster than the Julia implementation. However, the Julia version is more understandable and could be served as a good learning material for the algorithm. In addition, this implementation is 3x faster and more scalable than the one in [LightGraphsFlows.jl](https://github.com/JuliaGraphs/LightGraphsFlows.jl).
+
 ## Installation
-`Pkg.clone("https://github.com/Gnimuc/BKMaxflow.jl.git")`
+This package is not officially registered, you could either use it as an unregistered package or a isolated project which means it's not in your default environment.
+### Package
+```julia
+pkg> add https://github.com/Gnimuc/BKMaxflow.jl.git
+# or
+pkg> dev https://github.com/Gnimuc/BKMaxflow.jl.git
+```
+### Project
+- clone this repo to any directory you prefer
+- `cd` to that directory
+- start Julia and run `activate .` in `pkg>` mode
+- run `pkg> build` or `pkg> instantiate` if needed
 
 ## Quick Start
 ### Julia API
