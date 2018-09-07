@@ -1,4 +1,4 @@
-# Julia wrapper for header: /Users/gnimuc/.julia/v0.6/BKMaxflow/deps/usr/include/bk.h
+# Julia wrapper for header: /Users/gnimuc/Codes/BKMaxflow.jl/deps/usr/include/bk.h
 # Automatically generated using Clang.jl wrap_c, version 0.0.0
 
 

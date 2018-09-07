@@ -3,7 +3,7 @@ using Clang.cindex
 
 llvmcfg = "llvm-config"
 
-@static if is_apple()
+@static if Sys.isapple()
     using Homebrew
     !Homebrew.installed("llvm") && Homebrew.add("llvm")
     llvmcfg = joinpath(Homebrew.prefix(), "opt/llvm/bin/llvm-config")
