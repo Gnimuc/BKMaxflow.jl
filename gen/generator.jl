@@ -1,17 +1,6 @@
-using Clang.wrap_c
-using Clang.cindex
-
-llvmcfg = "llvm-config"
-
-@static if Sys.isapple()
-    using Homebrew
-    !Homebrew.installed("llvm") && Homebrew.add("llvm")
-    llvmcfg = joinpath(Homebrew.prefix(), "opt/llvm/bin/llvm-config")
-end
-
-const LLVM_VERSION = readchomp(`$llvmcfg --version`)
-const LLVM_LIBDIR  = readchomp(`$llvmcfg --libdir`)
-const LLVM_INCLUDE = joinpath(LLVM_LIBDIR, "clang", LLVM_VERSION, "include")
+using Clang
+using Clang.Deprecated.wrap_c
+using Clang.Deprecated.cindex
 
 const BK_INCLUDE = joinpath(@__DIR__, "..", "deps", "usr", "include") |> normpath
 const BK_HEADERS = [joinpath(root, file) for (root, dirs, files) in walkdir(BK_INCLUDE) for file in files]
